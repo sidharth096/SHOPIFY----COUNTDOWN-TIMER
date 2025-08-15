@@ -6,7 +6,7 @@ import serveStatic from "serve-static";
 
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
-import PrivacyWebhookHandlers from "./privacy.js";
+import connectToMongoDB from "./config/mongoose.js";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -69,6 +69,7 @@ app.post("/api/products", async (_req, res) => {
   res.status(status).send({ success: status === 200, error });
 });
 
+
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));
 
@@ -82,5 +83,9 @@ app.use("/*", shopify.ensureInstalledOnShop(), async (_req, res, _next) => {
         .replace("%VITE_SHOPIFY_API_KEY%", process.env.SHOPIFY_API_KEY || "")
     );
 });
+
+
+
+await connectToMongoDB();
 
 app.listen(PORT);
