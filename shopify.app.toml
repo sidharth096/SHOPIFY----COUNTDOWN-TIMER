@@ -3,7 +3,7 @@
 client_id = "994ff882388c77503c8dd75ea50ba4fa"
 name = "Countdown Timer"
 handle = "countdown-timer-104"
-application_url = "https://supplied-somewhere-tops-priorities.trycloudflare.com"
+application_url = "https://operating-t-alloy-delay.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://supplied-somewhere-tops-priorities.trycloudflare.com/auth/callback",
-  "https://supplied-somewhere-tops-priorities.trycloudflare.com/auth/shopify/callback",
-  "https://supplied-somewhere-tops-priorities.trycloudflare.com/api/auth/callback"
+  "https://operating-t-alloy-delay.trycloudflare.com/auth/callback",
+  "https://operating-t-alloy-delay.trycloudflare.com/auth/shopify/callback",
+  "https://operating-t-alloy-delay.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
