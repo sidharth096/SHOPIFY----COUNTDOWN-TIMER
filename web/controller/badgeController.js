@@ -49,3 +49,17 @@ export const getBadges = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getBadge = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const badge = await TimerBadge.findById(id);
+        if (!badge) {
+            return res.status(404).json({ error: 'TimerBadge not found' });
+        }
+        return res.status(200).json({ badge });
+    } catch (error) {
+        console.error('Error getting TimerBadge:', error);
+        next(error);
+    }
+};

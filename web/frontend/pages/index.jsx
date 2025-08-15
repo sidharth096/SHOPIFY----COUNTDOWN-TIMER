@@ -56,6 +56,11 @@ export default function HomePage() {
     navigate('/createBadge');
   };
 
+  // Navigate to edit badge page
+  const handleEdit = (badgeId) => {
+    navigate(`/editBadge/${badgeId}`);
+  };
+
   // Table rows for DataTable
   const rows = badges.map((badge) => {
     // Combine endDate and endTime (if endTime is provided)
@@ -71,6 +76,9 @@ export default function HomePage() {
       endDateTime, // Maps to end_time
       badge.color, // Maps to background_color
       'hsb(0, 0%, 0%)', // Default text_color (since not provided in API)
+      <Button size="slim" onClick={() => handleEdit(badge._id)}>
+        {t('HomePage.table.edit', { defaultValue: 'Edit' })}
+      </Button>, // Edit button
     ];
   });
 
@@ -100,13 +108,14 @@ export default function HomePage() {
             </div>
           ) : badges.length > 0 ? (
             <DataTable
-              columnContentTypes={['text', 'text', 'text', 'text', 'text']}
+              columnContentTypes={['text', 'text', 'text', 'text', 'text', 'text']}
               headings={[
                 t('HomePage.table.message', { defaultValue: 'Message' }),
                 t('HomePage.table.startTime', { defaultValue: 'Start Time' }),
                 t('HomePage.table.endTime', { defaultValue: 'End Time' }),
                 t('HomePage.table.backgroundColor', { defaultValue: 'Background Color' }),
                 t('HomePage.table.textColor', { defaultValue: 'Text Color' }),
+                t('HomePage.table.actions', { defaultValue: 'Actions' }),
               ]}
               rows={rows}
             />

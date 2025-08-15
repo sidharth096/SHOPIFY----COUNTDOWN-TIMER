@@ -1,4 +1,5 @@
 import { Routes as ReactRouterRoutes, Route } from "react-router-dom";
+import EditBadge from "./pages/EditBadge";
 
 /**
  * File-based routing.
@@ -26,6 +27,7 @@ export default function Routes({ pages }) {
     <ReactRouterRoutes>
       {routeComponents}
       <Route path="*" element={<NotFound />} />
+      <Route path="/editBadge/:id" element={<EditBadge />} />
     </ReactRouterRoutes>
   );
 }
