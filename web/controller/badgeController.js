@@ -78,3 +78,17 @@ export const updateBadge = async (req, res, next) => {
         next(error);
     }
 };
+
+export const deleteBadge = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const badge = await TimerBadge.findByIdAndDelete(id);
+        if (!badge) {
+            return res.status(404).json({ error: 'TimerBadge not found' });
+        }
+        return res.status(200).json({ message: 'TimerBadge deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting TimerBadge:', error);
+        next(error);
+    }
+};
