@@ -39,3 +39,13 @@ export const createBadge = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getBadges = async (req, res, next) => {
+    try {
+        const badges = await TimerBadge.find();
+        return res.status(200).json({ badges });
+    } catch (error) {
+        console.error('Error getting TimerBadges:', error);
+        next(error);
+    }
+};
