@@ -1,12 +1,14 @@
 import TimerBadge from "../models/model.timerBadge.js";
+import createOrUpdateAppMeta from "../utils/createOrUpdateAppMeta.js";
+import getAppInstallationID from "../utils/getAppInstallationID.js";
 
 
 export const createBadge = async (req, res, next) => {
     try {
 
-        console.log("============================",req.body)
         const { shop, host } = req.query;
         let badgeData = req.body;
+        const session = res.locals.shopify.session;
 
         // Validate required timerName
         if (!badgeData.timerName) {
@@ -26,6 +28,9 @@ export const createBadge = async (req, res, next) => {
         // Create and save the TimerBadge
         const badge = new TimerBadge(badgeData);
         await badge.save();
+
+        const gid = await getAppInstallationID(shop, session);
+        await createOrUpdateAppMeta(gid, session, badge, 'create');
 
         return res.status(201).json({ message: 'TimerBadge created successfully', badge });
     } catch (error) {
@@ -67,11 +72,17 @@ export const getBadge = async (req, res, next) => {
 export const updateBadge = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const {shop} = req.query;
         const badgeData = req.body;
+        const session = res.locals.shopify.session;
+
         const badge = await TimerBadge.findByIdAndUpdate(id, badgeData, { new: true });
         if (!badge) {
             return res.status(404).json({ error: 'TimerBadge not found' });
         }
+        const gid = await getAppInstallationID(shop, session);
+        await createOrUpdateAppMeta(gid, session, badge, 'update');
+
         return res.status(200).json({ badge });
     } catch (error) {
         console.error('Error updating TimerBadge:', error);
@@ -82,10 +93,17 @@ export const updateBadge = async (req, res, next) => {
 export const deleteBadge = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const { shop } = req.query;
+        const session = res.locals.shopify.session;
         const badge = await TimerBadge.findByIdAndDelete(id);
+
+
         if (!badge) {
             return res.status(404).json({ error: 'TimerBadge not found' });
         }
+        const gid = await getAppInstallationID(shop, session);
+        await createOrUpdateAppMeta(gid, session, badge, 'delete');
+
         return res.status(200).json({ message: 'TimerBadge deleted successfully' });
     } catch (error) {
         console.error('Error deleting TimerBadge:', error);
