@@ -1,93 +1,73 @@
-import {
-  Card,
-  Page,
-  Layout,
-  TextContainer,
-  Image,
-  Stack,
-  Link,
-  Text,
-} from "@shopify/polaris";
-import { TitleBar } from "@shopify/app-bridge-react";
-import { useTranslation, Trans } from "react-i18next";
-
-import { trophyImage } from "../assets";
-
-import { ProductsCard } from "../components";
+import { Page, Card, DataTable, Button, Text } from '@shopify/polaris';
+import { TitleBar, useAppBridge } from '@shopify/app-bridge-react';
+import { Redirect } from '@shopify/app-bridge/actions';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const shopify = useAppBridge();
+  const navigate = useNavigate();
+
+  // Static sample badge data
+  const badges = [
+    {
+      message: 'Hurry! Sale ends soon!',
+      end_time: '2025-08-20T23:59:59',
+      background_color: 'hsb(120, 50%, 80%)',
+      text_color: 'hsb(0, 0%, 0%)',
+    },
+    {
+      message: 'Limited Offer!',
+      end_time: '2025-08-15T18:00:00',
+      background_color: 'hsb(0, 70%, 90%)',
+      text_color: 'hsb(0, 0%, 100%)',
+    },
+  ];
+
+  // Navigate to configuration page
+  const handleConfigure = () => {
+    navigate("/createBadge")
+    
+  };
+
+  // Table rows for DataTable
+  const rows = badges.map((badge) => [
+    badge.message,
+    new Date(badge.end_time).toLocaleString(),
+    badge.background_color,
+    badge.text_color,
+  ]);
+
   return (
-    <Page narrowWidth>
-      <TitleBar title={t("HomePage.title")} />
-      <Layout>
-        <Layout.Section>
-          <Card sectioned>
-            <Stack
-              wrap={false}
-              spacing="extraTight"
-              distribution="trailing"
-              alignment="center"
-            >
-              <Stack.Item fill>
-                <TextContainer spacing="loose">
-                  <Text as="h2" variant="headingMd">
-                    {t("HomePage.heading")}
-                  </Text>
-                  <p>
-                    <Trans
-                      i18nKey="HomePage.yourAppIsReadyToExplore"
-                      components={{
-                        PolarisLink: (
-                          <Link url="https://polaris.shopify.com/" external />
-                        ),
-                        AdminApiLink: (
-                          <Link
-                            url="https://shopify.dev/api/admin-graphql"
-                            external
-                          />
-                        ),
-                        AppBridgeLink: (
-                          <Link
-                            url="https://shopify.dev/apps/tools/app-bridge"
-                            external
-                          />
-                        ),
-                      }}
-                    />
-                  </p>
-                  <p>{t("HomePage.startPopulatingYourApp")}</p>
-                  <p>
-                    <Trans
-                      i18nKey="HomePage.learnMore"
-                      components={{
-                        ShopifyTutorialLink: (
-                          <Link
-                            url="https://shopify.dev/apps/getting-started/add-functionality"
-                            external
-                          />
-                        ),
-                      }}
-                    />
-                  </p>
-                </TextContainer>
-              </Stack.Item>
-              <Stack.Item>
-                <div style={{ padding: "0 20px" }}>
-                  <Image
-                    source={trophyImage}
-                    alt={t("HomePage.trophyAltText")}
-                    width={120}
-                  />
-                </div>
-              </Stack.Item>
-            </Stack>
-          </Card>
-        </Layout.Section>
-        <Layout.Section>
-          <ProductsCard />
-        </Layout.Section>
-      </Layout>
+    <Page title={t('HomePage.title', { defaultValue: 'Timer Badge Dashboard' })}>
+      <TitleBar title={t('HomePage.title', { defaultValue: 'Timer Badge Dashboard' })} />
+      <Card>
+        <div style={{ padding: '16px' }}>
+          <Text as="h2" variant="headingMd">
+            {t('HomePage.heading', { defaultValue: 'Manage Your Timer Badges' })}
+          </Text>
+          <div style={{ margin: '16px 0' }}>
+            <Button primary onClick={handleConfigure}>
+              {t('HomePage.configureButton', { defaultValue: 'Configure Timer Badge' })}
+            </Button>
+          </div>
+          {badges.length > 0 ? (
+            <DataTable
+              columnContentTypes={['text', 'text', 'text', 'text']}
+              headings={[
+                t('HomePage.table.message', { defaultValue: 'Message' }),
+                t('HomePage.table.endTime', { defaultValue: 'End Time' }),
+                t('HomePage.table.backgroundColor', { defaultValue: 'Background Color' }),
+                t('HomePage.table.textColor', { defaultValue: 'Text Color' }),
+              ]}
+              rows={rows}
+            />
+          ) : (
+            <Text>{t('HomePage.noBadges', { defaultValue: 'No timer工夫timer badges configured yet.' })}</Text>
+          )}
+        </div>
+      </Card>
     </Page>
   );
 }

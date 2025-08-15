@@ -1,12 +1,13 @@
 // @ts-check
+import express from "express"
 import { join } from "path";
 import { readFileSync } from "fs";
-import express from "express";
 import serveStatic from "serve-static";
-
 import shopify from "./shopify.js";
+import PrivacyWebhookHandlers from "./privacy.js";
 import productCreator from "./product-creator.js";
 import connectToMongoDB from "./config/mongoose.js";
+import router from "./router.js";
 
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -39,35 +40,8 @@ app.use("/api/*", shopify.validateAuthenticatedSession());
 
 app.use(express.json());
 
-app.get("/api/products/count", async (_req, res) => {
-  const client = new shopify.api.clients.Graphql({
-    session: res.locals.shopify.session,
-  });
+app.use("/api", router);
 
-  const countData = await client.request(`
-    query shopifyProductCount {
-      productsCount {
-        count
-      }
-    }
-  `);
-
-  res.status(200).send({ count: countData.data.productsCount.count });
-});
-
-app.post("/api/products", async (_req, res) => {
-  let status = 200;
-  let error = null;
-
-  try {
-    await productCreator(res.locals.shopify.session);
-  } catch (e) {
-    console.log(`Failed to process products/create: ${e.message}`);
-    status = 500;
-    error = e.message;
-  }
-  res.status(status).send({ success: status === 200, error });
-});
 
 
 app.use(shopify.cspHeaders());
@@ -84,8 +58,19 @@ app.use("/*", shopify.ensureInstalledOnShop(), async (_req, res, _next) => {
     );
 });
 
+// Error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  const statusCode = err.status || 500;
+  res.status(statusCode).json({
+    success: false,
+    message: err.message || "server error",
+  });
+});
 
 
 await connectToMongoDB();
+
+
 
 app.listen(PORT);
