@@ -213,7 +213,7 @@ const EditBadge = () => {
           shopify.config.shop
         )}&host=${encodeURIComponent(shopify.config.host)}`,
         {
-          method: "PATCH",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
