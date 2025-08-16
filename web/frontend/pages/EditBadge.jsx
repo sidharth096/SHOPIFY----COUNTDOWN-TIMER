@@ -13,9 +13,77 @@ import {
   Spinner,
   Text,
   Banner,
+  Popover,
+  Box,
+  BlockStack,
 } from "@shopify/polaris";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
+
+// Correct HSB to Hex conversion (based on your working reference)
+const hsbToHex = ({ hue, saturation, brightness }) => {
+  const h = hue / 360;
+  const s = saturation;
+  const b = brightness;
+
+  const i = Math.floor(h * 6);
+  const f = h * 6 - i;
+  const p = b * (1 - s);
+  const q = b * (1 - f * s);
+  const t = b * (1 - (1 - f) * s);
+
+  let r, g, bVal;
+  switch (i % 6) {
+    case 0: r = b; g = t; bVal = p; break;
+    case 1: r = q; g = b; bVal = p; break;
+    case 2: r = p; g = b; bVal = t; break;
+    case 3: r = p; g = q; bVal = b; break;
+    case 4: r = t; g = p; bVal = b; break;
+    case 5: r = b; g = p; bVal = q; break;
+  }
+
+  const toHex = (value) => {
+    const hex = Math.round(value * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(bVal)}`.toUpperCase();
+};
+
+// Hex to HSB conversion (based on your working reference)
+const hexToHsb = (hex) => {
+  if (!hex || !hex.startsWith('#') || (hex.length !== 4 && hex.length !== 7)) {
+    return null;
+  }
+
+  let r, g, b;
+  if (hex.length === 4) {
+    r = parseInt(hex[1] + hex[1], 16) / 255;
+    g = parseInt(hex[2] + hex[2], 16) / 255;
+    b = parseInt(hex[3] + hex[3], 16) / 255;
+  } else {
+    r = parseInt(hex.slice(1, 3), 16) / 255;
+    g = parseInt(hex.slice(3, 5), 16) / 255;
+    b = parseInt(hex.slice(5, 7), 16) / 255;
+  }
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+  let h = 0;
+  const s = max === 0 ? 0 : delta / max;
+  const brightness = max;
+
+  if (delta !== 0) {
+    if (max === r) h = (g - b) / delta;
+    else if (max === g) h = 2 + (b - r) / delta;
+    else h = 4 + (r - g) / delta;
+  }
+  h = Math.min(h * 60, 360);
+  if (h < 0) h += 360;
+
+  return { hue: h, saturation: s, brightness };
+};
 
 const EditBadge = () => {
   const navigate = useNavigate();
@@ -29,11 +97,16 @@ const EditBadge = () => {
   const [endDate, setEndDate] = useState(null);
   const [endTime, setEndTime] = useState("");
   const [promotionDescription, setPromotionDescription] = useState("");
+  
+  // Initialize with proper HSB values (saturation and brightness as decimals 0-1)
   const [color, setColor] = useState({
-    hue: 120,
-    saturation: 50,
-    brightness: 80,
+    hue: 210,
+    saturation: 1,
+    brightness: 0.8,
   });
+  const [colorHex, setColorHex] = useState('#0099CC');
+  const [colorPickerActive, setColorPickerActive] = useState(false);
+  
   const [timerSize, setTimerSize] = useState("Medium");
   const [timerPosition, setTimerPosition] = useState("Top");
   const [urgencyNotification, setUrgencyNotification] = useState("Color pulse");
@@ -61,10 +134,31 @@ const EditBadge = () => {
       });
     } else {
       console.warn("Shopify toast not available:", message);
-      // Fallback: Use alert or log
       alert(message);
     }
   };
+
+  // Handle color change from ColorPicker
+  const handleColorChange = useCallback((newColor) => {
+    console.log('Color picker changed:', newColor);
+    setColor(newColor);
+    const hexValue = hsbToHex(newColor);
+    setColorHex(hexValue);
+    console.log('Converted to hex:', hexValue);
+  }, []);
+
+  // Handle hex input change
+  const handleHexChange = useCallback((value) => {
+    const cleanedValue = value.toUpperCase();
+    setColorHex(cleanedValue);
+
+    if (/^#[0-9A-F]{6}$/.test(cleanedValue) || /^#[0-9A-F]{3}$/.test(cleanedValue)) {
+      const hsbColor = hexToHsb(cleanedValue);
+      if (hsbColor) {
+        setColor(hsbColor);
+      }
+    }
+  }, []);
 
   // Fetch badge data on component mount
   const fetchBadge = useCallback(async () => {
@@ -102,7 +196,7 @@ const EditBadge = () => {
       }
 
       const data = await response.json();
-      console.log("Fetched badge data:", data); // Debug API response
+      console.log("Fetched badge data:", data);
       const badge = data.badge || {};
 
       if (!badge) {
@@ -117,15 +211,12 @@ const EditBadge = () => {
       setEndTime(badge.endTime || "");
       setPromotionDescription(badge.promotionDescription || "");
 
-      // Parse color from hsb(h, s%, b%) to { hue, saturation, brightness }
-      if (badge.color) {
-        const match = badge.color.match(/hsb\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
-        if (match) {
-          setColor({
-            hue: parseInt(match[1]),
-            saturation: parseInt(match[2]),
-            brightness: parseInt(match[3]),
-          });
+      // Parse color from hex to HSB for ColorPicker
+      if (badge.color && /^#[0-9A-Fa-f]{6}$/.test(badge.color)) {
+        const hsbColor = hexToHsb(badge.color);
+        if (hsbColor) {
+          setColor(hsbColor);
+          setColorHex(badge.color.toUpperCase());
         }
       }
 
@@ -143,7 +234,7 @@ const EditBadge = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [id, shopify]);
+  }, [id]);
 
   useEffect(() => {
     fetchBadge();
@@ -173,13 +264,15 @@ const EditBadge = () => {
   // Handle form submission
   const handleSubmit = async () => {
     if (!validateForm()) {
-      return; // Stop submission, show errors below fields
+      return;
     }
 
     if (!shopify?.config?.shop || !shopify?.config?.host) {
       showToastMessage("Shopify configuration is missing", true);
       return;
     }
+
+    console.log('Submitting with color:', color, 'Hex:', colorHex);
 
     const badgeData = {
       timerName,
@@ -200,7 +293,7 @@ const EditBadge = () => {
         : "",
       endTime,
       promotionDescription,
-      color: `hsb(${color.hue}, ${color.saturation}%, ${color.brightness}%)`,
+      color: colorHex, // Use the hex color directly
       timerSize,
       timerPosition,
       urgencyNotification,
@@ -232,8 +325,6 @@ const EditBadge = () => {
         false
       );
       console.log("Badge updated:", result);
-
-      // Navigate back to HomePage after successful update
       navigate("/");
     } catch (error) {
       showToastMessage(error.message, true);
@@ -323,7 +414,7 @@ const EditBadge = () => {
       }}
     >
       <Card sectioned>
-        <Form onSubmit={handleSubmit}>
+        <Form>
           <FormLayout>
             <TextField
               label="Timer name *"
@@ -420,12 +511,49 @@ const EditBadge = () => {
               maxLength={500}
               showCharacterCount
             />
-            <FormLayout.Group>
-              <div style={{ padding: "10px 0" }}>
-                <ColorPicker onChange={setColor} color={color} allowAlpha />
-              </div>
-              <div />
-            </FormLayout.Group>
+            
+            {/* Color Picker Section - Based on your working reference */}
+            <BlockStack gap="200">
+              <Text variant="bodyMd">Timer Color</Text>
+              <FormLayout.Group>
+                <Popover
+                  active={colorPickerActive}
+                  activator={
+                    <Button
+                      onClick={() => setColorPickerActive(!colorPickerActive)}
+                      disclosure
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Box
+                          background={colorHex}
+                          width="20px"
+                          height="20px"
+                          borderRadius="4px"
+                          style={{ border: '1px solid #e1e3e5' }}
+                        />
+                        <Text>Choose Color</Text>
+                      </div>
+                    </Button>
+                  }
+                  onClose={() => setColorPickerActive(false)}
+                >
+                  <Popover.Pane>
+                    <ColorPicker
+                      onChange={handleColorChange}
+                      color={color}
+                    />
+                  </Popover.Pane>
+                </Popover>
+                <TextField
+                  label="Hex Value"
+                  value={colorHex}
+                  onChange={handleHexChange}
+                  placeholder="#0099CC"
+                  helpText="Enter a 3 or 6 digit hex color (e.g., #FFF or #FF0000)"
+                />
+              </FormLayout.Group>
+            </BlockStack>
+            
             <FormLayout.Group>
               <Select
                 label="Timer size"

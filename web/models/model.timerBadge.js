@@ -56,12 +56,12 @@ const timerBadgeSchema = new mongoose.Schema({
   },
   color: {
     type: String,
-    default: 'hsb(120, 50%, 80%)',
+    default: '#78CCB3', // Converted from hsb(120, 50%, 80%)
     validate: {
       validator: function (v) {
-        return /^hsb\(\d{1,3}, \d{1,3}%, \d{1,3}%\)$/.test(v);
+        return /^#[0-9A-Fa-f]{6}$/.test(v);
       },
-      message: 'Color must be in hsb(hue, saturation%, brightness%) format',
+      message: 'Color must be a valid hex color (e.g., #RRGGBB)',
     },
   },
   timerSize: {

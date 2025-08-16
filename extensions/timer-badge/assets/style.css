@@ -1,0 +1,243 @@
+/* Timer Badge Common Styles */
+.timer-badge-container {
+  position: relative;
+  width: 100%;
+  z-index: 10;
+  margin: 10px 0;
+}
+
+.timer-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border-radius: 12px;
+  padding: 12px 20px;
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.timer-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Timer Description */
+.timer-description {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  opacity: 0.9;
+  text-align: center;
+}
+
+/* Timer Display */
+.timer-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+}
+
+.timer-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 35px;
+}
+
+.timer-number {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.timer-label {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.timer-separator {
+  font-size: 16px;
+  font-weight: bold;
+  opacity: 0.7;
+  animation: blink 2s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 0.7; }
+  51%, 100% { opacity: 0.3; }
+}
+
+/* Size Variations */
+.timer-size-small {
+  padding: 8px 16px;
+}
+
+.timer-size-small .timer-number {
+  font-size: 14px;
+}
+
+.timer-size-small .timer-label {
+  font-size: 8px;
+}
+
+.timer-size-small .timer-unit {
+  min-width: 28px;
+}
+
+.timer-size-small .timer-description {
+  font-size: 10px;
+}
+
+.timer-size-medium {
+  padding: 12px 20px;
+}
+
+.timer-size-medium .timer-number {
+  font-size: 18px;
+}
+
+.timer-size-medium .timer-label {
+  font-size: 10px;
+}
+
+.timer-size-medium .timer-unit {
+  min-width: 35px;
+}
+
+.timer-size-large {
+  padding: 16px 28px;
+}
+
+.timer-size-large .timer-number {
+  font-size: 24px;
+}
+
+.timer-size-large .timer-label {
+  font-size: 12px;
+}
+
+.timer-size-large .timer-unit {
+  min-width: 45px;
+}
+
+.timer-size-large .timer-description {
+  font-size: 14px;
+}
+
+/* Position Variations */
+.timer-position-top {
+  justify-content: flex-start;
+  margin-bottom: 15px;
+}
+
+.timer-position-bottom {
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.timer-position-center {
+  justify-content: center;
+  margin: 15px 0;
+}
+
+.timer-position-left {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.timer-position-right {
+  justify-content: flex-start;
+  align-items: flex-end;
+}
+
+/* Urgency Effects */
+.urgency-active.urgency-color-pulse {
+  animation: colorPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes colorPulse {
+  0% { 
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    transform: scale(1);
+  }
+  50% { 
+    background: linear-gradient(135deg, #ffebee, #ffcdd2);
+    color: #d32f2f;
+    transform: scale(1.02);
+  }
+  100% { 
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    color: var(--text-color);
+    transform: scale(1);
+  }
+}
+
+.urgency-active.urgency-shake {
+  animation: shake 0.8s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.urgency-active.urgency-glow {
+  box-shadow: 0 0 20px rgba(255, 71, 87, 0.5), 0 4px 15px rgba(0, 0, 0, 0.1);
+  animation: glow 1.5s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 71, 87, 0.5), 0 4px 15px rgba(0, 0, 0, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(255, 71, 87, 0.8), 0 6px 20px rgba(0, 0, 0, 0.15); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .timer-badge {
+    padding: 10px 16px;
+  }
+  
+  .timer-size-large .timer-number {
+    font-size: 20px;
+  }
+  
+  .timer-size-medium .timer-number {
+    font-size: 16px;
+  }
+  
+  .timer-size-small .timer-number {
+    font-size: 12px;
+  }
+  
+  .timer-display {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .timer-unit {
+    min-width: 25px !important;
+  }
+  
+  .timer-label {
+    display: none;
+  }
+  
+  .timer-display {
+    gap: 4px;
+  }
+}

@@ -37,17 +37,17 @@ const fetchMetafield = async (client, gid) => {
 };
 
 /**
- * Updates the metafield value with the badge data.
+ * Updates the metafield value with the badge data, ensuring the latest badge appears first.
  * @param {Object} metafieldValue - Existing metafield value (object with _id keys).
  * @param {Object} badge - Badge data containing _id and other fields.
  * @param {String} action - Action to perform: 'create', 'update', or 'delete'.
- * @returns {Object} Updated metafield value.
+ * @returns {Object} Updated metafield value with the latest badge first.
  */
 const updateMetafieldValue = (metafieldValue, badge, action) => {
     const { _id, timerName, startDate, startTime, endDate, endTime, promotionDescription, color, timerSize, timerPosition, urgencyNotification, urgencyTriggerThreshold } = badge;
 
     // Create a copy of the existing metafield value
-    const updatedMetafieldValue = { ...metafieldValue };
+    let updatedMetafieldValue = { ...metafieldValue };
 
     if (action === 'delete') {
         // Remove the badge with the matching _id
@@ -78,8 +78,18 @@ const updateMetafieldValue = (metafieldValue, badge, action) => {
     });
 
     if (action === 'create' || action === 'update') {
-        // Set or update the badge data under the _id key
+        // Convert the metafield value to an array of entries
+        let entries = Object.entries(updatedMetafieldValue);
+
+        // Update or add the badge data
         updatedMetafieldValue[_id] = badgeData;
+
+        // Rebuild entries to ensure the latest badge (_id) comes first
+        entries = Object.entries(updatedMetafieldValue);
+        entries = [[_id, badgeData], ...entries.filter(([key]) => key !== _id)];
+
+        // Convert back to an object
+        updatedMetafieldValue = Object.fromEntries(entries);
     }
 
     return updatedMetafieldValue;

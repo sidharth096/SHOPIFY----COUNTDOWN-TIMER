@@ -11,22 +11,96 @@ import {
   Button,
   ButtonGroup,
   Toast,
+  Popover,
+  Box,
+  Text,
+  BlockStack,
 } from "@shopify/polaris";
 import { useNavigate } from "react-router-dom";
 
+// Correct HSB to Hex conversion (based on your working reference)
+const hsbToHex = ({ hue, saturation, brightness }) => {
+  const h = hue / 360;
+  const s = saturation;
+  const b = brightness;
+
+  const i = Math.floor(h * 6);
+  const f = h * 6 - i;
+  const p = b * (1 - s);
+  const q = b * (1 - f * s);
+  const t = b * (1 - (1 - f) * s);
+
+  let r, g, bVal;
+  switch (i % 6) {
+    case 0: r = b; g = t; bVal = p; break;
+    case 1: r = q; g = b; bVal = p; break;
+    case 2: r = p; g = b; bVal = t; break;
+    case 3: r = p; g = q; bVal = b; break;
+    case 4: r = t; g = p; bVal = b; break;
+    case 5: r = b; g = p; bVal = q; break;
+  }
+
+  const toHex = (value) => {
+    const hex = Math.round(value * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(bVal)}`.toUpperCase();
+};
+
+// Hex to HSB conversion (based on your working reference)
+const hexToHsb = (hex) => {
+  if (!hex || !hex.startsWith('#') || (hex.length !== 4 && hex.length !== 7)) {
+    return null;
+  }
+
+  let r, g, b;
+  if (hex.length === 4) {
+    r = parseInt(hex[1] + hex[1], 16) / 255;
+    g = parseInt(hex[2] + hex[2], 16) / 255;
+    b = parseInt(hex[3] + hex[3], 16) / 255;
+  } else {
+    r = parseInt(hex.slice(1, 3), 16) / 255;
+    g = parseInt(hex.slice(3, 5), 16) / 255;
+    b = parseInt(hex.slice(5, 7), 16) / 255;
+  }
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+  let h = 0;
+  const s = max === 0 ? 0 : delta / max;
+  const brightness = max;
+
+  if (delta !== 0) {
+    if (max === r) h = (g - b) / delta;
+    else if (max === g) h = 2 + (b - r) / delta;
+    else h = 4 + (r - g) / delta;
+  }
+  h = Math.min(h * 60, 360);
+  if (h < 0) h += 360;
+
+  return { hue: h, saturation: s, brightness };
+};
+
 const CreateBadge = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [timerName, setTimerName] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [startTime, setStartTime] = useState("");
   const [endDate, setEndDate] = useState(null);
   const [endTime, setEndTime] = useState("");
   const [promotionDescription, setPromotionDescription] = useState("");
+  
+  // Initialize with proper HSB values (saturation and brightness as decimals 0-1)
   const [color, setColor] = useState({
-    hue: 120,
-    saturation: 50,
-    brightness: 80,
+    hue: 210,
+    saturation: 1,
+    brightness: 0.8,
   });
+  const [colorHex, setColorHex] = useState('#0099CC');
+  const [colorPickerActive, setColorPickerActive] = useState(false);
+  
   const [timerSize, setTimerSize] = useState("Medium");
   const [timerPosition, setTimerPosition] = useState("Top");
   const [urgencyNotification, setUrgencyNotification] = useState("Color pulse");
@@ -43,20 +117,19 @@ const CreateBadge = () => {
   });
   const [errors, setErrors] = useState({});
 
-
-  const showToastMessage = (message, isError)=>{
-    shopify.toast.show(message,{
-      duration:3000,
-      isError: isError
-    })
-  }
-
-
+  const showToastMessage = (message, isError) => {
+    shopify.toast.show(message, {
+      duration: 3000,
+      isError: isError,
+    });
+  };
 
   const validateForm = () => {
     const newErrors = {};
     if (!timerName || timerName.length < 3) {
-      newErrors.timerName = timerName ? "Timer name must be at least 3 characters" : "Timer name is required";
+      newErrors.timerName = timerName
+        ? "Timer name must be at least 3 characters"
+        : "Timer name is required";
     }
     if (!startDate) {
       newErrors.startDate = "Start date is required";
@@ -71,10 +144,34 @@ const CreateBadge = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Handle color change from ColorPicker
+  const handleColorChange = useCallback((newColor) => {
+    console.log('Color picker changed:', newColor);
+    setColor(newColor);
+    const hexValue = hsbToHex(newColor);
+    setColorHex(hexValue);
+    console.log('Converted to hex:', hexValue);
+  }, []);
+
+  // Handle hex input change
+  const handleHexChange = useCallback((value) => {
+    const cleanedValue = value.toUpperCase();
+    setColorHex(cleanedValue);
+
+    if (/^#[0-9A-F]{6}$/.test(cleanedValue) || /^#[0-9A-F]{3}$/.test(cleanedValue)) {
+      const hsbColor = hexToHsb(cleanedValue);
+      if (hsbColor) {
+        setColor(hsbColor);
+      }
+    }
+  }, []);
+
   const handleSubmit = async () => {
     if (!validateForm()) {
-      return; // Stop submission, show errors below fields
+      return;
     }
+
+    console.log('Submitting with color:', color, 'Hex:', colorHex);
 
     const badgeData = {
       timerName,
@@ -95,7 +192,7 @@ const CreateBadge = () => {
         : "",
       endTime,
       promotionDescription,
-      color: `hsb(${color.hue}, ${color.saturation}%, ${color.brightness}%)`,
+      color: colorHex,
       timerSize,
       timerPosition,
       urgencyNotification,
@@ -122,24 +219,29 @@ const CreateBadge = () => {
       }
 
       const result = await response.json();
-      showToastMessage(result.message || "TimerBadge created successfully!",false)
+      showToastMessage(
+        result.message || "TimerBadge created successfully!",
+        false
+      );
       console.log("Badge created:", result);
 
-      // Reset form after successful submission
+      // Reset form
       setTimerName("");
       setStartDate(null);
       setStartTime("");
       setEndDate(null);
       setEndTime("");
       setPromotionDescription("");
-      setColor({ hue: 120, saturation: 50, brightness: 80 });
+      setColor({ hue: 210, saturation: 1, brightness: 0.8 });
+      setColorHex('#0099CC');
       setTimerSize("Medium");
       setTimerPosition("Top");
       setUrgencyNotification("Color pulse");
       setUrgencyTriggerThreshold("1");
       setErrors({});
+      navigate("/");
     } catch (error) {
-      showToastMessage(error.message,true)
+      showToastMessage(error.message, true);
       console.error("Error creating badge:", error);
     }
   };
@@ -172,21 +274,31 @@ const CreateBadge = () => {
 
   const handleTimerNameChange = useCallback((value) => {
     setTimerName(value);
-    setErrors((prev) => ({ ...prev, timerName: value && value.length < 3 ? "Timer name must be at least 3 characters" : null }));
+    setErrors((prev) => ({
+      ...prev,
+      timerName:
+        value && value.length < 3
+          ? "Timer name must be at least 3 characters"
+          : null,
+    }));
   }, []);
 
   const handleUrgencyNotificationChange = useCallback((value) => {
     setUrgencyNotification(value);
-    setErrors((prev) => ({ ...prev, urgencyNotification: value ? null : "Urgency notification is required" }));
+    setErrors((prev) => ({
+      ...prev,
+      urgencyNotification: value ? null : "Urgency notification is required",
+    }));
   }, []);
 
-
-
   return (
-    <Page title="Create New Timer"  backAction={{
-      content: 'Back',
-      onAction: () => navigate('/')
-    }}>
+    <Page
+      title="Create New Timer"
+      backAction={{
+        content: "Back",
+        onAction: () => navigate("/"),
+      }}
+    >
       <Card sectioned>
         <Form onSubmit={handleSubmit}>
           <FormLayout>
@@ -285,12 +397,49 @@ const CreateBadge = () => {
               maxLength={500}
               showCharacterCount
             />
-            <FormLayout.Group>
-              <div style={{ padding: "10px 0" }}>
-                <ColorPicker onChange={setColor} color={color} allowAlpha />
-              </div>
-              <div />
-            </FormLayout.Group>
+            
+            {/* Color Picker Section - Based on your working reference */}
+            <BlockStack gap="200">
+              <Text variant="bodyMd">Timer Color</Text>
+              <FormLayout.Group>
+                <Popover
+                  active={colorPickerActive}
+                  activator={
+                    <Button
+                      onClick={() => setColorPickerActive(!colorPickerActive)}
+                      disclosure
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Box
+                          background={colorHex}
+                          width="20px"
+                          height="20px"
+                          borderRadius="4px"
+                          style={{ border: '1px solid #e1e3e5' }}
+                        />
+                        <Text>Choose Color</Text>
+                      </div>
+                    </Button>
+                  }
+                  onClose={() => setColorPickerActive(false)}
+                >
+                  <Popover.Pane>
+                    <ColorPicker
+                      onChange={handleColorChange}
+                      color={color}
+                    />
+                  </Popover.Pane>
+                </Popover>
+                <TextField
+                  label="Hex Value"
+                  value={colorHex}
+                  onChange={handleHexChange}
+                  placeholder="#0099CC"
+                  helpText="Enter a 3 or 6 digit hex color (e.g., #FFF or #FF0000)"
+                />
+              </FormLayout.Group>
+            </BlockStack>
+            
             <FormLayout.Group>
               <Select
                 label="Timer size"
@@ -321,7 +470,8 @@ const CreateBadge = () => {
                 min="0"
                 step="0.1"
                 error={
-                  urgencyTriggerThreshold && parseFloat(urgencyTriggerThreshold) < 0
+                  urgencyTriggerThreshold &&
+                  parseFloat(urgencyTriggerThreshold) < 0
                     ? "Urgency trigger cannot be negative"
                     : null
                 }
@@ -329,7 +479,7 @@ const CreateBadge = () => {
             </FormLayout.Group>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <ButtonGroup>
-                <Button onClick={()=>navigate("/")}>Cancel</Button>
+                <Button onClick={() => navigate("/")}>Cancel</Button>
                 <Button variant="primary" onClick={handleSubmit}>
                   Create timer
                 </Button>

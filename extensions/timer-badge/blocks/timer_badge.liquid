@@ -1,0 +1,172 @@
+{% assign badge_data = app.metafields.badge_data.badge_data_key.value %}
+{% if badge_data %}
+  {% assign first_badge = null %}
+  {% assign first_badge_key = null %}
+  {% for badge_item in badge_data %}
+    {% assign first_badge_key = badge_item[0] %}
+    {% assign first_badge = badge_item[1] %}
+    {% break %}
+  {% endfor %}
+
+  <script>
+    debugger;
+    window.BadgeData = {
+      firstBadge: {{ first_badge | json }},
+      badgeKey: '{{ first_badge_key }}'
+    };
+  </script>
+
+  {% if first_badge %}
+    {% comment %} Parse dates and times {% endcomment %}
+    {% if first_badge.endTime != blank and first_badge.endTime != '' %}
+      {% assign end_date_string = first_badge.endDate | append: ' ' | append: first_badge.endTime %}
+    {% else %}
+      {% assign end_date_string = first_badge.endDate | append: ' 23:59:59' %}
+    {% endif %}
+
+    {% if first_badge.startTime != blank and first_badge.startTime != '' %}
+      {% assign start_date_string = first_badge.startDate | append: ' ' | append: first_badge.startTime %}
+    {% else %}
+      {% assign start_date_string = first_badge.startDate | append: ' 00:00:00' %}
+    {% endif %}
+
+    {% comment %} Convert MM/DD/YYYY to YYYY-MM-DD format for better parsing {% endcomment %}
+    {% assign start_parts = first_badge.startDate | split: '/' %}
+    {% assign end_parts = first_badge.endDate | split: '/' %}
+
+    {% if start_parts.size == 3 %}
+      {% assign start_formatted = start_parts[2]
+        | append: '-'
+        | append: start_parts[0]
+        | append: '-'
+        | append: start_parts[1]
+      %}
+      {% if first_badge.startTime != blank and first_badge.startTime != '' %}
+        {% assign start_formatted = start_formatted | append: ' ' | append: first_badge.startTime %}
+      {% else %}
+        {% assign start_formatted = start_formatted | append: ' 00:00:00' %}
+      {% endif %}
+    {% else %}
+      {% assign start_formatted = start_date_string %}
+    {% endif %}
+
+    {% if end_parts.size == 3 %}
+      {% assign end_formatted = end_parts[2]
+        | append: '-'
+        | append: end_parts[0]
+        | append: '-'
+        | append: end_parts[1]
+      %}
+      {% if first_badge.endTime != blank and first_badge.endTime != '' %}
+        {% assign end_formatted = end_formatted | append: ' ' | append: first_badge.endTime %}
+      {% else %}
+        {% assign end_formatted = end_formatted | append: ' 23:59:59' %}
+      {% endif %}
+    {% else %}
+      {% assign end_formatted = end_date_string %}
+    {% endif %}
+
+    {% assign current_time = 'now' | date: '%s' %}
+    {% assign end_timestamp = end_formatted | date: '%s' %}
+    {% assign start_timestamp = start_formatted | date: '%s' %}
+
+    {% comment %} Convert HSB to HSL for CSS {% endcomment %}
+    {% assign badge_color = first_badge.color %}
+    {% if badge_color contains 'hsb' %}
+      {% assign badge_color = badge_color | replace: 'hsb', 'hsl' %}
+    {% endif %}
+
+    {% comment %} Only show if current time is between start and end dates {% endcomment %}
+    {% if current_time >= start_timestamp and current_time <= end_timestamp %}
+      <script>
+        debugger;
+        window.bb = {
+          firstBadge: {{ first_badge | json }},
+          badgeKey: '{{ first_badge_key }}'
+        };
+      </script>
+      <div
+        class="timer-badge-container timer-position-{{ first_badge.timerPosition | downcase }}"
+        data-end-date="{{ end_timestamp }}"
+        data-urgency-threshold="{{ first_badge.urgencyTriggerThreshold }}"
+        data-urgency-type="{{ first_badge.urgencyNotification | downcase | replace: ' ', '-' }}"
+        style="--text-color: {{ badge_color }};"
+      >
+        <div class="timer-badge timer-size-{{ first_badge.timerSize | downcase }}">
+          {% if first_badge.promotionDescription != blank and first_badge.promotionDescription != '' %}
+            <div class="timer-description">{{ first_badge.promotionDescription }}</div>
+          {% endif %}
+
+          <div class="timer-display">
+            <div class="timer-unit">
+              <span class="timer-number days">00</span>
+              <span class="timer-label">Days</span>
+            </div>
+            <div class="timer-separator">:</div>
+            <div class="timer-unit">
+              <span class="timer-number hours">00</span>
+              <span class="timer-label">Hours</span>
+            </div>
+            <div class="timer-separator">:</div>
+            <div class="timer-unit">
+              <span class="timer-number minutes">00</span>
+              <span class="timer-label">Min</span>
+            </div>
+            <div class="timer-separator">:</div>
+            <div class="timer-unit">
+              <span class="timer-number seconds">00</span>
+              <span class="timer-label">Sec</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        (function () {
+          const timerContainer = document.querySelector('.timer-badge-container[data-end-date]');
+          if (!timerContainer) return;
+
+          const endTime = parseInt(timerContainer.dataset.endDate) * 1000;
+          const urgencyThreshold = parseInt(timerContainer.dataset.urgencyThreshold) * 1000;
+          const urgencyType = timerContainer.dataset.urgencyType;
+
+          function updateTimer() {
+            const now = new Date().getTime();
+            const timeLeft = endTime - now;
+
+            if (timeLeft > 0) {
+              const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+              timerContainer.querySelector('.days').textContent = days.toString().padStart(2, '0');
+              timerContainer.querySelector('.hours').textContent = hours.toString().padStart(2, '0');
+              timerContainer.querySelector('.minutes').textContent = minutes.toString().padStart(2, '0');
+              timerContainer.querySelector('.seconds').textContent = seconds.toString().padStart(2, '0');
+
+              // Apply urgency effects
+              if (timeLeft <= urgencyThreshold) {
+                timerContainer.classList.add('urgency-active');
+                timerContainer.classList.add('urgency-' + urgencyType);
+              }
+            } else {
+              timerContainer.style.display = 'none';
+            }
+          }
+
+          updateTimer();
+          setInterval(updateTimer, 1000);
+        })();
+      </script>
+    {% endif %}
+  {% endif %}
+{% endif %}
+
+{% schema %}
+{
+  "name": "Timer Badge",
+  "target": "section",
+  "stylesheet": "style.css"
+}
+{% endschema %}

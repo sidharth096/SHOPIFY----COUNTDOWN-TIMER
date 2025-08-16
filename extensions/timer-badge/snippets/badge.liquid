@@ -1,0 +1,10 @@
+{% liquid
+  assign badge_data = Badge_data | default: {}
+%}
+
+{% if badge_data %}
+  <br>
+  <span class="badge-text">
+    {{ badge_data }}
+  </span>
+{% endif %}

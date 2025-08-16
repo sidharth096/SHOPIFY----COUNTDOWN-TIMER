@@ -3,7 +3,7 @@
 client_id = "994ff882388c77503c8dd75ea50ba4fa"
 name = "Countdown Timer"
 handle = "countdown-timer-104"
-application_url = "https://psychology-teen-generators-gmc.trycloudflare.com"
+application_url = "https://labour-ruby-numbers-mistakes.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://psychology-teen-generators-gmc.trycloudflare.com/auth/callback",
-  "https://psychology-teen-generators-gmc.trycloudflare.com/auth/shopify/callback",
-  "https://psychology-teen-generators-gmc.trycloudflare.com/api/auth/callback"
+  "https://labour-ruby-numbers-mistakes.trycloudflare.com/auth/callback",
+  "https://labour-ruby-numbers-mistakes.trycloudflare.com/auth/shopify/callback",
+  "https://labour-ruby-numbers-mistakes.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
