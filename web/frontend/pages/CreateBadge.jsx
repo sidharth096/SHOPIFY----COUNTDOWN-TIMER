@@ -239,6 +239,7 @@ const CreateBadge = () => {
       setUrgencyNotification("Color pulse");
       setUrgencyTriggerThreshold("1");
       setErrors({});
+      navigate("/");
     } catch (error) {
       showToastMessage(error.message, true);
       console.error("Error creating badge:", error);
